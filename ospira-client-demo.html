@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ospira — Growing Minds Assessment, Demo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --purple-900:#2E1B47;
+    --purple-700:#783FAA;
+    --purple-300:#B084D4;
+    --purple-100:#F1E8FA;
+
+    --pink-700:#C81158;
+    --pink-500:#ED196A;
+    --pink-300:#F480A8;
+    --pink-100:#FDE3ED;
+
+    --sky-700:#0E7EA3;
+    --sky-500:#46CEF5;
+    --sky-100:#E4F8FD;
+
+    --yellow-700:#8A6400;
+    --yellow-500:#FFD105;
+    --yellow-100:#FFF6D6;
+
+    --cream:#FAF8FC;
+    --paper:#FFFFFF;
+    --ink-900:#241934;
+    --ink-600:#5F5670;
+    --ink-400:#938C9E;
+    --line:#E9E0F3;
+    --radius:12px;
+    --shadow:0 1px 2px rgba(46,27,71,.05), 0 3px 10px rgba(46,27,71,.05);
+    --serif:Georgia,'Iowan Old Style','Times New Roman',serif;
+    --sans:'Segoe UI',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--cream);color:var(--ink-900);font-family:var(--sans);-webkit-font-smoothing:antialiased;font-size:14px;}
+
+  /* ===== Header ===== */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:13px 28px;background:var(--purple-900);color:#fff;flex-wrap:wrap;gap:10px;
+  }
+  .brand{display:flex;align-items:center;gap:11px;}
+  .brand-mark{
+    width:32px;height:32px;border-radius:50%;flex:none;
+    background:conic-gradient(var(--sky-500) 0deg 90deg, var(--yellow-500) 90deg 180deg, var(--pink-500) 180deg 270deg, var(--purple-300) 270deg 360deg);
+    position:relative;
+  }
+  .brand-mark::after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--purple-900);}
+  .brand-text .word{font-family:var(--serif);font-size:18px;letter-spacing:.3px;line-height:1;}
+  .brand-text .tag{font-size:10.5px;color:#DCC7F0;letter-spacing:.3px;}
+  .demo-chip{
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:999px;
+    padding:6px 13px;font-size:12px;display:flex;align-items:center;gap:7px;
+  }
+  .demo-chip .dot{width:6px;height:6px;border-radius:50%;background:#8FE38F;}
+
+  /* ===== Tabs ===== */
+  .tabbar{
+    display:flex;gap:2px;overflow-x:auto;padding:0 20px;background:var(--paper);
+    border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;
+  }
+  .tab{
+    border:none;background:none;cursor:pointer;font-family:var(--sans);font-size:13px;font-weight:600;
+    color:var(--ink-400);padding:11px 13px 10px;white-space:nowrap;border-bottom:3px solid transparent;
+    transition:color .15s ease,border-color .15s ease;
+  }
+  .tab .n{
+    display:inline-block;width:16px;height:16px;border-radius:50%;background:var(--line);color:var(--ink-600);
+    font-size:9px;font-weight:700;line-height:16px;text-align:center;margin-right:6px;
+  }
+  .tab.active{color:var(--ink-900);}
+  .tab[data-c="pink"].active{border-color:var(--pink-500);}
+  .tab[data-c="pink"].active .n{background:var(--pink-500);color:#fff;}
+  .tab[data-c="sky"].active{border-color:var(--sky-500);}
+  .tab[data-c="sky"].active .n{background:var(--sky-500);color:#fff;}
+  .tab[data-c="yellow"].active{border-color:var(--yellow-500);}
+  .tab[data-c="yellow"].active .n{background:var(--yellow-500);color:var(--yellow-700);}
+  .tab[data-c="purple"].active{border-color:var(--purple-700);}
+  .tab[data-c="purple"].active .n{background:var(--purple-700);color:#fff;}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 22px 44px;}
+  .panel{display:none;}
+  .panel.active{display:block;animation:fadein .2s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:none;}}
+
+  h1.hero{font-family:var(--serif);font-size:28px;line-height:1.2;margin:0 0 6px;max-width:700px;}
+  .lede{font-size:13.5px;color:var(--ink-600);max-width:600px;line-height:1.55;margin:0 0 18px;}
+
+  .eyebrow{font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;display:block;}
+  .eyebrow.pink{color:var(--pink-700);}
+  .eyebrow.sky{color:var(--sky-700);}
+  .eyebrow.yellow{color:var(--yellow-700);}
+  .eyebrow.purple{color:var(--purple-700);}
+
+  h2.section-title{font-family:var(--serif);font-size:20px;margin:0 0 4px;}
+  .section-sub{color:var(--ink-600);font-size:12.5px;margin:0 0 14px;max-width:640px;line-height:1.5;}
+
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+  .stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;box-shadow:var(--shadow);}
+  .stat .num{font-family:var(--serif);font-size:23px;color:var(--purple-700);line-height:1;}
+  .stat .label{font-size:11px;color:var(--ink-600);margin-top:4px;line-height:1.35;}
+
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
+  .card-top{border-top:3px solid var(--purple-700);}
+  .card-top.pink{border-top-color:var(--pink-500);}
+  .card-top.sky{border-top-color:var(--sky-500);}
+  .card-top.yellow{border-top-color:var(--yellow-500);}
+
+  .grid-2{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .grid-6{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+  @media(max-width:980px){.grid-2,.grid-3,.stat-row{grid-template-columns:1fr 1fr;}.grid-6{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:640px){.grid-2,.grid-3,.stat-row,.grid-6{grid-template-columns:1fr;}}
+
+  canvas{max-width:100%;}
+  .chart-box{height:190px;}
+  .chart-box-sm{height:150px;}
+
+  /* pipeline flow */
+  .flow{display:flex;gap:0;margin:14px 0 20px;overflow-x:auto;}
+  .flow-step{flex:1;min-width:135px;background:var(--paper);border:1px solid var(--line);padding:11px 12px 12px;position:relative;}
+  .flow-step:first-child{border-radius:var(--radius) 0 0 var(--radius);}
+  .flow-step:last-child{border-radius:0 var(--radius) var(--radius) 0;}
+  .flow-step + .flow-step{border-left:none;}
+  .flow-step .fi{font-size:9.5px;font-weight:700;color:var(--ink-400);letter-spacing:.5px;}
+  .flow-step h4{margin:5px 0 3px;font-size:12.5px;}
+  .flow-step p{margin:0;font-size:11px;color:var(--ink-600);line-height:1.4;}
+  .flow-step::after{content:"›";position:absolute;right:-11px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--ink-400);z-index:2;}
+  .flow-step:last-child::after{display:none;}
+
+  .strip{
+    display:flex;align-items:center;gap:10px;background:var(--purple-100);border-radius:10px;
+    padding:9px 14px;font-size:12px;color:var(--purple-700);margin-top:14px;
+  }
+  .strip b{font-weight:700;}
+
+  /* Strengths tab */
+  .legend-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;}
+  .legend-chip{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ink-600);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px 9px;}
+  .legend-chip .sw{width:8px;height:8px;border-radius:2px;}
+  .mid-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .mid-chips span{font-size:10.5px;background:var(--cream);border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--ink-600);}
+  .mid-chips span b{color:var(--ink-900);}
+
+  /* Learning DNA */
+  .env-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px;}
+  .env-table th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-400);padding:5px 8px;border-bottom:1px solid var(--line);}
+  .env-table td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.4;}
+  .env-table tr:last-child td{border-bottom:none;}
+  .env-table .provide{color:var(--sky-700);}
+  .env-table .avoid{color:var(--pink-700);}
+
+  /* Gap meter */
+  .gap-toggle{display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:2px;margin-bottom:12px;}
+  .gap-toggle button{border:none;background:none;padding:6px 14px;font-size:12px;font-weight:600;border-radius:999px;cursor:pointer;color:var(--ink-600);font-family:var(--sans);}
+  .gap-toggle button.on{background:var(--yellow-500);color:var(--yellow-700);}
+  .gap-row{margin-bottom:13px;}
+  .gap-row .gap-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+  .gap-row .gap-label strong{font-weight:700;}
+  .gap-row .gap-label .pct{color:var(--purple-700);font-weight:700;}
+  .gap-track{position:relative;height:8px;background:var(--line);border-radius:5px;}
+  .gap-fill{position:absolute;top:0;left:0;height:100%;border-radius:5px;background:var(--purple-100);}
+  .gap-dot{position:absolute;top:50%;width:13px;height:13px;border-radius:50%;transform:translate(-50%,-50%);border:2.5px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .gap-dot.child{background:var(--purple-700);z-index:3;}
+  .gap-dot.parent{background:var(--ink-400);z-index:2;}
+  .gap-legend{display:flex;gap:14px;font-size:11px;color:var(--ink-600);margin-bottom:12px;}
+  .gap-legend span{display:flex;align-items:center;gap:5px;}
+  .gap-legend .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  /* Career tab */
+  .archetype-card{
+    background:linear-gradient(135deg,var(--yellow-100),#fff);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+  }
+  .archetype-card .at-main{flex:1;min-width:220px;}
+  .archetype-card .kicker{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--yellow-700);font-weight:700;}
+  .archetype-card h3{font-family:var(--serif);font-size:21px;margin:5px 0 2px;}
+  .archetype-card .sub{font-style:italic;color:var(--ink-600);margin:0;font-size:12.5px;}
+  .archetype-card .at-desc{flex:1.3;min-width:260px;font-size:12px;color:var(--ink-600);line-height:1.55;}
+
+  .domain-card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 12px;box-shadow:var(--shadow);}
+  .domain-card h5{margin:0 0 6px;font-size:11.5px;line-height:1.3;color:var(--purple-700);}
+  .domain-card .dtags{display:flex;flex-wrap:wrap;gap:4px;}
+  .domain-card .dtags span{font-size:10px;background:var(--purple-100);color:var(--purple-700);border-radius:6px;padding:3px 6px;line-height:1.3;}
+
+  /* Coaching timeline */
+  .timeline{border-left:2px solid var(--line);margin-left:8px;padding-left:18px;}
+  .tstep{position:relative;padding-bottom:16px;}
+  .tstep:last-child{padding-bottom:0;}
+  .tstep::before{content:attr(data-n);position:absolute;left:-27px;top:0;width:19px;height:19px;border-radius:50%;background:var(--purple-700);color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .tstep h4{margin:0 0 3px;font-size:12.5px;}
+  .tstep p{margin:0;font-size:11.5px;color:var(--ink-600);line-height:1.5;}
+  .tstep ul{margin:5px 0 0;padding-left:16px;font-size:11px;color:var(--ink-600);line-height:1.55;}
+
+  .sentence-card{background:var(--purple-900);color:#fff;border-radius:var(--radius);padding:16px 18px;}
+  .sentence-card .formula{font-family:var(--serif);font-size:15.5px;line-height:1.5;margin:8px 0 0;}
+  .sentence-card .formula .blank{display:inline-block;background:rgba(255,255,255,.14);border-radius:5px;padding:1px 8px;margin:0 1px;}
+  .sentence-card .worked{margin-top:10px;font-size:12px;color:#E9DEFA;font-style:italic;line-height:1.5;}
+
+  .checklist{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .checklist span{font-size:10.5px;background:var(--sky-100);color:var(--sky-700);border-radius:999px;padding:4px 10px;font-weight:600;}
+
+  /* ===== Client Story ===== */
+  .concern-banner{
+    background:var(--purple-900);color:#fff;border-radius:var(--radius);padding:12px 16px;
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px;
+  }
+  .concern-banner .cb-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#DCC7F0;font-weight:700;}
+  .concern-banner .cb-tags{display:flex;flex-wrap:wrap;gap:6px;flex:1;}
+  .concern-banner .cb-tags span{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:4px 11px;font-size:11.5px;}
+  .concern-banner .cb-note{font-size:10.5px;color:#DCC7F0;font-style:italic;white-space:nowrap;}
+
+  .insight-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+  .insight-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;border-top:3px solid var(--pink-500);box-shadow:var(--shadow);}
+  .insight-card .ic-num{font-family:var(--serif);font-size:11px;color:var(--pink-700);font-weight:700;}
+  .insight-card h4{margin:4px 0 8px;font-size:13px;}
+  .insight-card .ic-metric{display:flex;justify-content:space-between;font-size:11.5px;padding:4px 0;border-bottom:1px dashed var(--line);}
+  .insight-card .ic-metric:last-of-type{border-bottom:none;}
+  .insight-card .ic-metric b{color:var(--pink-700);font-family:var(--serif);font-size:13px;}
+  .insight-card p{font-size:11px;color:var(--ink-600);line-height:1.5;margin:8px 0 0;}
+
+  .cycle-diagram{position:relative;width:100%;max-width:420px;aspect-ratio:1/1;margin:6px auto 4px;}
+  .cycle-diagram svg{position:absolute;inset:0;width:100%;height:100%;}
+  .cycle-node-abs{
+    position:absolute;transform:translate(-50%,-50%);width:140px;background:var(--paper);
+    border:1.5px solid var(--sky-500);border-radius:12px;padding:10px 11px;text-align:center;
+    box-shadow:0 3px 10px rgba(70,206,245,.16);
+  }
+  .cycle-node-abs .cna-badge{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:var(--sky-500);color:#0E4A5E;font-size:9.5px;font-weight:700;margin-bottom:4px;}
+  .cycle-node-abs .cna-title{font-weight:700;font-size:11.5px;margin-bottom:2px;}
+  .cycle-node-abs .cna-sub{font-size:9.5px;color:var(--ink-600);line-height:1.3;}
+  .cycle-center{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:104px;height:104px;border-radius:50%;
+    background:var(--sky-100);border:1.5px dashed var(--sky-500);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:8px;
+  }
+  .cycle-center .cc-icon{font-size:16px;color:var(--sky-700);line-height:1;margin-bottom:3px;}
+  .cycle-center .cc-text{font-size:9px;font-weight:700;color:var(--sky-700);line-height:1.3;}
+  @media(max-width:520px){
+    .cycle-node-abs{width:104px;padding:7px 6px;}
+    .cycle-node-abs .cna-title{font-size:10px;}
+    .cycle-node-abs .cna-sub{font-size:8.5px;}
+    .cycle-center{width:82px;height:82px;}
+  }
+  .cycle-caption{text-align:center;font-size:11px;color:var(--ink-400);font-style:italic;margin:0 0 16px;}
+
+  .solution-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:16px;}
+  @media(max-width:900px){.solution-grid{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:560px){.solution-grid{grid-template-columns:1fr 1fr;}}
+  .solution-card{background:var(--purple-700);color:#fff;border-radius:10px;padding:12px 11px;}
+  .solution-card .sc-num{font-family:var(--serif);font-size:16px;opacity:.55;}
+  .solution-card h5{margin:3px 0 5px;font-size:12px;letter-spacing:.2px;}
+  .solution-card p{margin:0;font-size:10px;line-height:1.45;color:#EDE0F7;}
+
+  .tracker{display:flex;gap:0;align-items:stretch;margin-bottom:6px;flex-wrap:wrap;}
+  .tracker .tr-metrics{flex:1;min-width:220px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius) 0 0 var(--radius);padding:13px 15px;}
+  .tracker .tr-metrics .tm{display:flex;align-items:center;gap:8px;font-size:11.5px;padding:4px 0;color:var(--ink-600);}
+  .tracker .tr-metrics .tm .dot{width:7px;height:7px;border-radius:50%;background:var(--pink-500);flex:none;}
+  .tracker .tr-review{flex:none;width:180px;background:var(--pink-100);border:1px solid var(--line);border-left:none;border-radius:0 var(--radius) var(--radius) 0;padding:13px 15px;}
+  .tracker .tr-review .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--pink-700);font-weight:700;margin-bottom:7px;}
+  .review-pts{display:flex;justify-content:space-between;}
+  .review-pts .rp{text-align:center;}
+  .review-pts .rp .wk{font-family:var(--serif);font-size:16px;color:var(--pink-700);}
+  .review-pts .rp .lb{font-size:9.5px;color:var(--ink-600);}
+
+  .evidence-strip{font-size:10.5px;color:var(--ink-400);line-height:1.6;margin-top:14px;padding:10px 14px;background:var(--paper);border:1px solid var(--line);border-radius:8px;}
+
+  .footer-note{max-width:1180px;margin:0 auto;padding:0 22px 26px;font-size:10.5px;color:var(--ink-400);line-height:1.5;}
+  .footer-note strong{color:var(--ink-600);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div class="brand-text"><div class="word">Ospira</div><div class="tag">Growing Minds Assessment</div></div>
+  </div>
+  <div class="demo-chip"><span class="dot"></span> Demo report · Gautami Sahu, age 14</div>
+</div>
+
+<div class="tabbar" id="tabbar">
+  <button class="tab active" data-c="purple" data-tab="overview"><span class="n">0</span>Overview</button>
+  <button class="tab" data-c="pink" data-tab="strengths"><span class="n">1</span>Strengths</button>
+  <button class="tab" data-c="sky" data-tab="learning"><span class="n">2</span>Learning DNA</button>
+  <button class="tab" data-c="yellow" data-tab="gaps"><span class="n">3</span>Parent–Child Gaps</button>
+  <button class="tab" data-c="purple" data-tab="career"><span class="n">4</span>Career Pathways</button>
+  <button class="tab" data-c="sky" data-tab="coaching"><span class="n">5</span>Human Coaching</button>
+  <button class="tab" data-c="pink" data-tab="story"><span class="n">6</span>Client Story</button>
+</div>
+
+<div class="wrap">
+
+  <!-- ================= OVERVIEW ================= -->
+  <div class="panel active" id="panel-overview">
+    <span class="eyebrow purple">How Ospira Works</span>
+    <h1 class="hero">One assessment. A complete map of how your child thinks, feels, and grows.</h1>
+    <p class="lede">Ospira turns a parent and child questionnaire into a structured picture of your child's strengths, learning style, and future direction — then a trained coach turns it into a plan.</p>
+
+    <div class="stat-row">
+      <div class="stat"><div class="num">24</div><div class="label">Strength areas, rolled into 6 development systems</div></div>
+      <div class="stat"><div class="num">8+6</div><div class="label">Intelligences and interest types mapped</div></div>
+      <div class="stat"><div class="num">1,200</div><div class="label">Careers in the matching database</div></div>
+      <div class="stat"><div class="num">2</div><div class="label">Parent views compared to the child's own</div></div>
+    </div>
+
+    <h2 class="section-title">From questionnaire to guided plan</h2>
+    <p class="section-sub">This dashboard mirrors the same pipeline every report follows.</p>
+    <div class="flow">
+      <div class="flow-step"><div class="fi">DATA</div><h4>Child + parents answer</h4><p>Independent questionnaires for the child and up to two parents.</p></div>
+      <div class="flow-step"><div class="fi">SCORE</div><h4>24 areas, 6 systems</h4><p>Scored into 24 clusters, rolled up into 6 development systems.</p></div>
+      <div class="flow-step"><div class="fi">COMPARE</div><h4>Gaps surfaced</h4><p>Child vs. parent scores diffed automatically.</p></div>
+      <div class="flow-step"><div class="fi">DIRECT</div><h4>Careers matched</h4><p>Interests + aptitude matched against 1,200 careers.</p></div>
+      <div class="flow-step"><div class="fi">COACH</div><h4>Guided session</h4><p>A coach runs a structured session — a real plan, not just a PDF.</p></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card card-top">
+        <span class="eyebrow purple">Snapshot: Development Systems</span>
+        <h2 class="section-title" style="font-size:16px;">Where Gautami is strongest right now</h2>
+        <p class="section-sub" style="margin-bottom:6px;">Net score per system, −10 to +10, as seen by Parent 1.</p>
+        <div class="chart-box"><canvas id="chartDevRadar"></canvas></div>
+      </div>
+      <div class="card card-top pink">
+        <span class="eyebrow pink">Why this feels different</span>
+        <h2 class="section-title" style="font-size:16px;">Not just a scored PDF — a plan you can act on</h2>
+        <p style="font-size:12px;color:var(--ink-600);line-height:1.6;margin:0 0 8px;">
+          Most assessments hand you a report and stop. Ospira's structure — score → compare → direct → coach — turns your answers into a real conversation, guided by a trained coach using this same data.
+        </p>
+        <p style="font-size:12px;color:var(--ink-600);line-height:1.6;margin:0;">
+          The perception-gap layer (Tab 3) is often the most eye-opening: it shows exactly where your sense of your child differs from how she sees herself.
+        </p>
+      </div>
+    </div>
+
+    <div class="strip"><b>See it end to end →</b> Tab 6, Client Story, shows how these numbers become a named pattern and a 5-step plan for one real family.</div>
+  </div>
+
+  <!-- ================= STRENGTHS ================= -->
+  <div class="panel" id="panel-strengths">
+    <span class="eyebrow pink">Part 1 — Behaviors &amp; Attributes</span>
+    <h2 class="section-title">24 strength areas — top 8, bottom 8, and everything between</h2>
+    <p class="section-sub">Every child is scored 0–10 across 24 behavior clusters. The top 8 are clearest natural strengths; the bottom 8 are capacity-building areas — never framed as deficits.</p>
+
+    <div class="legend-row">
+      <div class="legend-chip"><span class="sw" style="background:var(--purple-700)"></span>Self-Identity</div>
+      <div class="legend-chip"><span class="sw" style="background:var(--sky-500)"></span>Cognitive</div>
+      <div class="legend-chip"><span class="sw" style="background:var(--pink-500)"></span>Belonging</div>
+      <div class="legend-chip"><span class="sw" style="background:var(--yellow-500)"></span>Regulation</div>
+      <div class="legend-chip"><span class="sw" style="background:var(--purple-300)"></span>Direction</div>
+      <div class="legend-chip"><span class="sw" style="background:var(--pink-300)"></span>Activation</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <span class="eyebrow pink">Top 8 — clearest strengths</span>
+        <div class="chart-box"><canvas id="chartTop8"></canvas></div>
+      </div>
+      <div class="card">
+        <span class="eyebrow purple">Bottom 8 — building capacity</span>
+        <div class="chart-box"><canvas id="chartBottom8"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <span class="eyebrow purple">The middle 8 — steady, developing areas</span>
+      <div class="mid-chips">
+        <span><b>Critical Thinking</b> 5.74</span>
+        <span><b>Emotional Resilience</b> 5.64</span>
+        <span><b>Enterprise</b> 5.55</span>
+        <span><b>Connection to Nature</b> 5.49</span>
+        <span><b>Leadership Skills</b> 5.45</span>
+        <span><b>Teamwork &amp; Collaboration</b> 5.39</span>
+        <span><b>Communication Skills</b> 5.37</span>
+        <span><b>Problem Solving &amp; Innovation</b> 5.28</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= LEARNING ================= -->
+  <div class="panel" id="panel-learning">
+    <span class="eyebrow sky">Part 2 — Learning Environment</span>
+    <h2 class="section-title">How Gautami takes in, processes, and shares learning</h2>
+    <p class="section-sub">Three lenses translate directly into home and school environment recommendations.</p>
+
+    <div class="grid-3">
+      <div class="card"><span class="eyebrow sky">Receiving information</span><div class="chart-box-sm"><canvas id="chartSensory"></canvas></div></div>
+      <div class="card"><span class="eyebrow sky">Processing information</span><div class="chart-box-sm"><canvas id="chartProcessing"></canvas></div></div>
+      <div class="card"><span class="eyebrow sky">Working with others</span><div class="chart-box-sm"><canvas id="chartSocial"></canvas></div></div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <span class="eyebrow sky">Turned into action — physical environment</span>
+      <table class="env-table">
+        <tr><th style="width:15%">Factor</th><th style="width:44%">Provide</th><th>Avoid</th></tr>
+        <tr><td>Learning space</td><td class="provide">Quiet nook with books &amp; writing tools; a flexible area for movement</td><td class="avoid">Studying in the living room — too many distractions</td></tr>
+        <tr><td>Sound</td><td class="provide">Scheduled quiet/lively times; headphones for focus tasks</td><td class="avoid">Loud TV or music near the study area</td></tr>
+        <tr><td>Light</td><td class="provide">Bright, even, glare-free; dimmable desk lamp</td><td class="avoid">Harsh, glaring light that strains eyes</td></tr>
+        <tr><td>Colour</td><td class="provide">Soft blue walls, bright accent pops for energy</td><td class="avoid">Overly bright wall colours during study time</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ================= GAPS ================= -->
+  <div class="panel" id="panel-gaps">
+    <span class="eyebrow yellow">Part 3 — A Difference of Perceptions</span>
+    <h2 class="section-title">Where self-view and parent view diverge most</h2>
+    <p class="section-sub">Every score is captured twice — once from the child, once from each parent. The gap itself becomes the coaching material, not a "wrong" answer on either side.</p>
+
+    <div class="grid-2">
+      <div>
+        <div class="gap-toggle" id="gapToggle">
+          <button class="on" data-parent="p1">vs. Parent 1</button>
+          <button data-parent="p2">vs. Parent 2</button>
+        </div>
+        <div class="gap-legend">
+          <span><span class="dot" style="background:var(--purple-700)"></span>Child's self-score</span>
+          <span><span class="dot" style="background:var(--ink-400)"></span>Parent's score</span>
+        </div>
+        <div class="card" id="gapRows"></div>
+      </div>
+      <div>
+        <div class="card card-top yellow" style="margin-bottom:12px;">
+          <span class="eyebrow yellow">Why the gap happens</span>
+          <p style="font-size:11.5px;color:var(--ink-600);line-height:1.6;margin:0;">A child may show a strength quietly, privately, or only outside the home — the parent simply hasn't seen it yet. Every gap ships with a "why," an impact note for both sides, and a short action checklist.</p>
+        </div>
+        <div class="card card-top yellow">
+          <span class="eyebrow yellow">If gaps go unaddressed</span>
+          <ul style="font-size:11px;color:var(--ink-600);line-height:1.7;margin:0;padding-left:16px;">
+            <li><strong>Short-term:</strong> communication hiccups, feeling unappreciated.</li>
+            <li><strong>Medium-term:</strong> the child shares less, study-habit friction.</li>
+            <li><strong>Long-term:</strong> stifled talents, strained trust.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CAREER ================= -->
+  <div class="panel" id="panel-career">
+    <span class="eyebrow purple">Part 4 — Career Pathways</span>
+    <h2 class="section-title">From today's strengths to tomorrow's direction</h2>
+    <p class="section-sub">Interests, aptitude, and key strengths are matched against 1,200 careers into a named archetype and ranked pathway domains.</p>
+
+    <div class="archetype-card">
+      <div class="at-main">
+        <div class="kicker">Career Profile</div>
+        <h3>The Thoughtful Helper</h3>
+        <p class="sub">Turning curiosity into care.</p>
+      </div>
+      <div class="at-desc">Investigative + Social interests: understanding people, solving meaningful problems, contributing to others' wellbeing. Aligned with Logical-Mathematical &amp; Interpersonal intelligence, reinforced by Problem Solving and Social Skills strengths.</div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:12px;">
+      <div class="card"><span class="eyebrow purple">Multiple intelligences</span><div class="chart-box-sm"><canvas id="chartIntelligence"></canvas></div></div>
+      <div class="card"><span class="eyebrow purple">Interest types (RIASEC)</span><div class="chart-box-sm"><canvas id="chartInterests"></canvas></div></div>
+    </div>
+
+    <span class="eyebrow purple">Recommended pathway domains</span>
+    <div class="grid-6" style="margin-top:6px;">
+      <div class="domain-card"><h5>Learning &amp; Education</h5><div class="dtags"><span>Academic Research</span><span>Curriculum Design</span><span>Ed. Psychology</span></div></div>
+      <div class="domain-card"><h5>Public Policy &amp; Impact</h5><div class="dtags"><span>Policy Studies</span><span>Heritage Promotion</span></div></div>
+      <div class="domain-card"><h5>Healthcare &amp; Wellbeing</h5><div class="dtags"><span>Public Health</span><span>Medical Specialties</span><span>Biomedical Sci.</span></div></div>
+      <div class="domain-card"><h5>Design &amp; Media</h5><div class="dtags"><span>Journalism</span><span>Public Comms.</span></div></div>
+      <div class="domain-card"><h5>Climate &amp; Systems</h5><div class="dtags"><span>Sustainability Policy</span><span>Climate Risk</span></div></div>
+      <div class="domain-card"><h5>Tech &amp; Governance</h5><div class="dtags"><span>Tech Policy</span><span>Digital Governance</span></div></div>
+    </div>
+  </div>
+
+  <!-- ================= COACHING ================= -->
+  <div class="panel" id="panel-coaching">
+    <span class="eyebrow sky">Beyond the report</span>
+    <h2 class="section-title">A trained coach runs the session — not the PDF alone</h2>
+    <p class="section-sub">Every report feeds a structured session guide, so you leave with real understanding and a clear plan. Our coaches are trained to turn these insights into practical solutions.</p>
+
+    <div class="grid-2">
+      <div class="timeline">
+        <div class="tstep" data-n="1"><h4>Why is the family here?</h4><p>Captures the parent's main concern, biggest hope, and existing beliefs about the child.</p></div>
+        <div class="tstep" data-n="2"><h4>The child's story — patterns</h4><p>Built from evidence across reports, never a single score: strongest pattern, two more key patterns, an emerging strength, one challenge — pausing to check it resonates.</p></div>
+        <div class="tstep" data-n="3"><h4>12 guided questions</h4><p>Each with example phrasing and a "Where to Look" cue into the report.</p>
+          <ul><li>What's most important to understand about her</li><li>Where perceptions differ, and which gap to explore first</li><li>Focus areas for the next 6–12 months (1–2 max)</li></ul>
+        </div>
+        <div class="tstep" data-n="4"><h4>Parent coaching priorities</h4><p>What's already going right, the top 3 focus areas, and a one-sentence child summary.</p></div>
+        <div class="tstep" data-n="5"><h4>The parent reframe</h4><p>The one mindset shift the parent most needs — e.g. "it's motivation, not ability."</p></div>
+        <div class="tstep" data-n="6"><h4>Closing &amp; follow-up</h4><p>Two takeaways — this week, this month — and a checklist for next session.</p>
+          <div class="checklist"><span>Behaviour</span><span>School</span><span>Motivation</span><span>Wellbeing</span><span>Learning</span><span>Career</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="sentence-card">
+          <span class="eyebrow" style="color:#DCC7F0;">Session output</span>
+          <h3 style="font-family:var(--serif);margin:4px 0 0;font-size:16px;">The child, in one sentence</h3>
+          <div class="formula">"<span class="blank">Name</span> is a <span class="blank">feeling</span> + <span class="blank">thinking</span> + <span class="blank">action</span> girl who thrives when <span class="blank">condition</span>."</div>
+          <div class="worked">"Gautami is a reflective, word-loving, independently-driven girl who thrives when she's given quiet space to explore ideas, then invited — gently — to share them."</div>
+        </div>
+        <div class="card" style="margin-top:12px;">
+          <span class="eyebrow sky">Professional guardrail</span>
+          <p style="font-size:11.5px;color:var(--ink-600);line-height:1.6;margin:0;">This is a professional guidance tool. Observations aren't standalone conclusions — final interpretation rests on the coach's judgment and direct interaction with the child.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CLIENT STORY ================= -->
+  <div class="panel" id="panel-story">
+    <span class="eyebrow pink">Ospira Insight Map — one real family</span>
+    <h2 class="section-title">Gautami: from strong opinions to flexible, connected action</h2>
+    <p class="section-sub">What a completed Ospira engagement produces — the numbers above turned into a named pattern, a likely cycle, and a 5-step plan.</p>
+
+    <div class="concern-banner">
+      <div class="cb-label">Parents' concern</div>
+      <div class="cb-tags"><span>Very low socialization</span><span>Very little physical activity</span><span>Adamant / strong opinions</span></div>
+      <div class="cb-note">Starting point — not a diagnosis</div>
+    </div>
+
+    <div class="insight-cards">
+      <div class="insight-card">
+        <div class="ic-num">01</div><h4>Her strong inner world</h4>
+        <div class="ic-metric"><span>Read-write skills</span><b>6.97</b></div>
+        <div class="ic-metric"><span>Reflection</span><b>6.35</b></div>
+        <div class="ic-metric"><span>Self-identity</span><b>+3 highest</b></div>
+        <p>She thinks deeply, expresses ideas clearly, and develops firm views.</p>
+      </div>
+      <div class="insight-card">
+        <div class="ic-num">02</div><h4>Where practice is low</h4>
+        <div class="ic-metric"><span>Physical activity</span><b>5.12</b></div>
+        <div class="ic-metric"><span>Social skills</span><b>5.09</b></div>
+        <div class="ic-metric"><span>Hands-on engagement</span><b>4.60</b></div>
+        <p>Stronger inside than their visible use in movement and groups.</p>
+      </div>
+      <div class="insight-card">
+        <div class="ic-num">03</div><h4>The perception gap</h4>
+        <div class="ic-metric"><span>Social intelligence gap</span><b>50 pts</b></div>
+        <div class="ic-metric"><span>Collaborative learner gap</span><b>30 pts</b></div>
+        <div class="ic-metric"><span>Activation &amp; Direction</span><b>−2</b></div>
+        <p>She feels more social than parents observe; independence can hide her need for connection.</p>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <span class="eyebrow sky">The likely maintaining cycle</span>
+        <div class="cycle-diagram">
+          <svg viewBox="0 0 520 520" preserveAspectRatio="xMidYMid meet">
+            <defs><marker id="arrowhead" markerWidth="9" markerHeight="9" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#46CEF5"/></marker></defs>
+            <path d="M 260,110 A 150,150 0 0,1 410,260" fill="none" stroke="#46CEF5" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+            <path d="M 410,260 A 150,150 0 0,1 260,410" fill="none" stroke="#46CEF5" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+            <path d="M 260,410 A 150,150 0 0,1 110,260" fill="none" stroke="#46CEF5" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+            <path d="M 110,260 A 150,150 0 0,1 260,110" fill="none" stroke="#46CEF5" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+          </svg>
+          <div class="cycle-center"><div class="cc-icon">↻</div><div class="cc-text">Self-reinforcing<br>without intervention</div></div>
+          <div class="cycle-node-abs" style="left:50%;top:13.5%;"><div class="cna-badge">1</div><div class="cna-title">Strong inner world</div><div class="cna-sub">Ideas, identity, clear views</div></div>
+          <div class="cycle-node-abs" style="left:86.5%;top:50%;"><div class="cna-badge">2</div><div class="cna-title">Control feels safer</div><div class="cna-sub">Prefers own pace and space</div></div>
+          <div class="cycle-node-abs" style="left:50%;top:86.5%;"><div class="cna-badge">3</div><div class="cna-title">Outside practice drops</div><div class="cna-sub">Less movement, group time</div></div>
+          <div class="cycle-node-abs" style="left:13.5%;top:50%;"><div class="cna-badge">4</div><div class="cna-title">Positions harden</div><div class="cna-sub">Correction feels like conflict</div></div>
+        </div>
+        <p class="cycle-caption">Each stage quietly feeds the next — until a coach interrupts it at a specific point.</p>
+      </div>
+      <div>
+        <span class="eyebrow pink">How Ospira breaks the cycle</span>
+        <div class="solution-grid" style="grid-template-columns:1fr 1fr;margin-top:8px;">
+          <div class="solution-card"><div class="sc-num">01</div><h5>Validate</h5><p>Name her reasoning first; separate a strong view from disrespectful behaviour.</p></div>
+          <div class="solution-card"><div class="sc-num">02</div><h5>Connect</h5><p>Begin with one peer and one shared interest; build toward a small group.</p></div>
+          <div class="solution-card"><div class="sc-num">03</div><h5>Move</h5><p>20–30 min daily: dance, walking, badminton, cycling — her choice.</p></div>
+          <div class="solution-card"><div class="sc-num">04</div><h5>Flex</h5><p>Two-view rule: restate the other view before disagreeing.</p></div>
+        </div>
+        <div class="solution-card" style="margin-top:9px;"><div class="sc-num">05</div><h5>Act</h5><p>She selects one weekly goal, plans three steps, finishes it, and reviews the result.</p></div>
+
+        <span class="eyebrow purple" style="margin-top:14px;">Roadmap</span>
+        <div class="tracker" style="margin-top:6px;">
+          <div class="tr-metrics">
+            <div class="tm"><span class="dot"></span>Active minutes</div>
+            <div class="tm"><span class="dot"></span>Social interactions initiated</div>
+            <div class="tm"><span class="dot"></span>Alternative views restated</div>
+            <div class="tm"><span class="dot"></span>Weekly goals completed</div>
+          </div>
+          <div class="tr-review">
+            <div class="lbl">Review at</div>
+            <div class="review-pts">
+              <div class="rp"><div class="wk">2</div><div class="lb">wks</div></div>
+              <div class="rp"><div class="wk">6</div><div class="lb">wks</div></div>
+              <div class="rp"><div class="wk">12</div><div class="lb">wks</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="evidence-strip"><strong>Evidence trail:</strong> R1 Behaviour &amp; Attributes (pp. 3–17) · R2 Learning Environment · R3 Difference of Perceptions (pp. 3–9) · R4 Career Pathways (p. 13) · two-parent worksheet. Working formulation — validated through counselling, observation and context, never from a single score.</div>
+  </div>
+
+</div>
+
+<div class="footer-note"><strong>Sample data notice.</strong> All figures on this page are drawn from Ospira's own Growing Minds Assessment sample report (Gautami Sahu, age 14) for demonstration purposes. The assessment is a guidance tool, not a diagnostic instrument.</div>
+
+<script>
+Chart.defaults.font.family = "'Segoe UI', -apple-system, sans-serif";
+Chart.defaults.font.size = 10.5;
+Chart.defaults.color = '#5F5670';
+
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+function miniBar(id,labels,data,color,max){
+  new Chart(document.getElementById(id), {
+    type:'bar',
+    data:{labels:labels, datasets:[{data:data, backgroundColor:color, borderRadius:4, barThickness:14}]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>c.raw+(max===100?'%':' / 10')}}},
+      scales:{ x:{min:0,max:max, grid:{color:'#F1ECF9'}, ticks:{callback:v=>max===100?v+'%':v}}, y:{grid:{display:false},ticks:{font:{size:10.5}}} }
+    }
+  });
+}
+
+new Chart(document.getElementById('chartDevRadar'), {
+  type:'radar',
+  data:{labels:['Activation','Belonging','Cognitive','Direction','Regulation','Self-Identity'],
+    datasets:[{label:'Net score',data:[-2,0,2,-2,-1,3],backgroundColor:'rgba(120,63,170,0.16)',borderColor:'#783FAA',pointBackgroundColor:'#783FAA',borderWidth:2,pointRadius:3}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{r:{min:-10,max:10,ticks:{stepSize:5,backdropColor:'transparent',font:{size:9}},grid:{color:'#EFE4F7'},angleLines:{color:'#EFE4F7'},pointLabels:{font:{size:10}}}}}
+});
+
+miniBar('chartTop8', ["Read-Write","Reflection","Musical","Adventurous","Creativity","Auditory","Emotional Intel.","Visual Skills"], [6.97,6.35,6.24,6.14,6.12,6.00,5.87,5.75], ["#783FAA","#783FAA","#783FAA","#F480A8","#783FAA","#46CEF5","#ED196A","#46CEF5"], 8);
+miniBar('chartBottom8', ["Focus & Discipline","Physical Activity","Independence","Social Skills","Decision-making","Hands-On","Drive & Goal","Structured Learning"], [5.21,5.12,5.11,5.09,5.07,4.60,4.56,4.35], ["#FFD105","#F480A8","#B084D4","#ED196A","#F480A8","#F480A8","#B084D4","#FFD105"], 8);
+
+miniBar('chartSensory', ['Read/Write','Hearing','Seeing','Hands-on'], [58,48,40,22], '#46CEF5', 100);
+miniBar('chartProcessing', ['Trying','Applying','Analysing','Reflecting'], [57,40,38,28], '#46CEF5', 100);
+miniBar('chartSocial', ['Independent','Guided','Team-based'], [70,53,38], '#46CEF5', 100);
+
+miniBar('chartIntelligence', ['Verbal-Linguistic','Logical-Math','Self-Intrapersonal','Musical','Naturalistic','People-Interpersonal','Bodily-Kinesthetic','Visual-Spatial'], [72,68,65,60,45,38,35,30], '#783FAA', 100);
+miniBar('chartInterests', ['Investigative','Social','Artistic','Realistic','Enterprising','Conventional'], [80,57,54,38,35,28], '#783FAA', 100);
+
+const gapData = {
+  p1: [
+    {label:"Musical Intelligence", child:79, parent:22, diff:57},
+    {label:"Environmental Intelligence", child:58, parent:19, diff:39},
+    {label:"Social Intelligence", child:50, parent:16, diff:34},
+    {label:"Creative Interests", child:64, parent:34, diff:30},
+    {label:"Collaborative Learner", child:49, parent:19, diff:30}
+  ],
+  p2: [
+    {label:"Dependent Learner", child:61, parent:10, diff:51},
+    {label:"Social Intelligence", child:50, parent:0, diff:50},
+    {label:"Personal Intelligence", child:67, parent:28, diff:39},
+    {label:"Musical Intelligence", child:79, parent:41, diff:38},
+    {label:"Enterprising Interests", child:46, parent:10, diff:36}
+  ]
+};
+function renderGaps(which){
+  const rows = gapData[which];
+  document.getElementById('gapRows').innerHTML = rows.map(r=>{
+    const lo=Math.min(r.child,r.parent), hi=Math.max(r.child,r.parent);
+    return `<div class="gap-row"><div class="gap-label"><strong>${r.label}</strong><span class="pct">${r.diff}pt gap</span></div>
+      <div class="gap-track"><div class="gap-fill" style="left:${lo}%;width:${hi-lo}%;"></div>
+      <div class="gap-dot child" style="left:${r.child}%;"></div><div class="gap-dot parent" style="left:${r.parent}%;"></div></div></div>`;
+  }).join('');
+}
+renderGaps('p1');
+document.querySelectorAll('#gapToggle button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#gapToggle button').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    renderGaps(btn.dataset.parent);
+  });
+});
+</script>
+</body>
+</html>
